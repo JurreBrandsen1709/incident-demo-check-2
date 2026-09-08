@@ -1,0 +1,11 @@
+# .NET build output (all project folders, including nested bin/obj directories)
+**/bin/
+**/obj/
+
+# Visual Studio
+.vs/
+*.user
+
+# Rider
+.idea/
+*.sln.iml

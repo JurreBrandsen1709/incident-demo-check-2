@@ -1,0 +1,50 @@
+name: Incident Agent
+
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  respond:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Load incident-responder system prompt
+        id: prompt
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+        run: |
+          {
+            echo 'content<<PROMPT_EOF'
+            echo "Use the custom agent defined in .claude/agents/incident-responder.md."
+            echo "Read it and follow its instructions exactly for this task."
+            echo ""
+            cat .claude/agents/incident-responder.md
+            echo ""
+            echo "## Triggering Issue"
+            echo ""
+            echo "Issue #$ISSUE_NUMBER: $ISSUE_TITLE"
+            echo ""
+            echo "$ISSUE_BODY"
+            echo PROMPT_EOF
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          label_trigger: "incident:triage-ready"
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.DEMO_PAT }}
+          prompt: ${{ steps.prompt.outputs.content }}
+          show_full_output: true
+          claude_args: |
+            --model haiku
+            --allowedTools "Read,Grep,Glob,Edit,Write,Bash(git init:*),Bash(git checkout:*),Bash(git add:*),Bash(git commit:*),Bash(git push:*),Bash(gh pr create:*),Bash(gh issue comment:*),Bash(dotnet build:*),Bash(dotnet test:*),Bash(dotnet clean:*)"
+            --disallowedTools "Bash(gh pr merge:*),Bash(gh pr edit:*),Bash(gh issue close:*),Bash(gh issue edit:*),Bash(gh api:*),Edit(.github/**),Write(.github/**),Edit(.claude/**),Write(.claude/**)"

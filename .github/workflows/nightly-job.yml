@@ -1,0 +1,36 @@
+name: Nightly Reconciliation Job
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  run-job:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Run reconciliation job
+        id: run
+        run: |
+          OUTPUT=$(dotnet run --project app/src/ReconciliationJob -- fixtures/partner-export-current.csv 2026-01-01T00:00:00Z 2026-01-06T00:00:00Z)
+          echo "$OUTPUT"
+          COUNT=$(echo "$OUTPUT" | grep -oP 'records_processed: \K\d+')
+          if [ -z "$COUNT" ]; then
+            echo "::error::Could not extract records_processed from job output"
+            exit 1
+          fi
+          echo "count=$COUNT" >> "$GITHUB_OUTPUT"
+
+      - name: Fire simulated anomaly alert if zero records processed
+        if: steps.run.outputs.count == 0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: node scripts/simulate-alert.js "${{ steps.run.outputs.count }}"

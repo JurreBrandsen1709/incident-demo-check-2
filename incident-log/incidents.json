@@ -1,0 +1,9 @@
+[
+  {
+    "date": "2025-11-14",
+    "symptom": "Nightly reconciliation job ran with records_processed: 0, no exception, App Insights anomaly alert fired (observed 0, expected 4-6).",
+    "symptomKeywords": ["records", "processed", "zero", "anomaly", "reconciliation"],
+    "rootCause": "The upstream vendor feed did not deliver the nightly export file at all, due to a scheduling mismatch around a public holiday on the vendor's side. No code defect involved.",
+    "resolution": "Closed via an ops ticket with the vendor. No code change was made. A follow-up alert was added to monitor the feed's delivery acknowledgment directly."
+  }
+]

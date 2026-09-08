@@ -1,0 +1,31 @@
+name: Pre-triage
+
+on:
+  repository_dispatch:
+    types: [anomaly-detected]
+  workflow_dispatch:
+    inputs:
+      omit_input_shape_delta:
+        description: "Ablation demo convenience: run with the input-shape-delta collector disabled (overrides the DEMO_OMIT_INPUT_SHAPE_DELTA repo variable for this run)"
+        type: boolean
+        required: false
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run pre-triage script
+        env:
+          GITHUB_TOKEN: ${{ secrets.DEMO_PAT }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          ALERT_PAYLOAD: ${{ toJson(github.event.client_payload) }}
+          DEMO_OMIT_INPUT_SHAPE_DELTA: ${{ (github.event_name == 'workflow_dispatch' && inputs.omit_input_shape_delta) && 'true' || vars.DEMO_OMIT_INPUT_SHAPE_DELTA }}
+        run: node scripts/pretriage.js

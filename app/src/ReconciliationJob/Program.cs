@@ -20,8 +20,6 @@ try
         return 1;
     }
 
-    Console.WriteLine($"Reconciliation report for window {fromUtc:yyyy-MM-dd HH:mm} UTC to {toUtc:yyyy-MM-dd HH:mm} UTC");
-
     IRecordStore store = RecordStore.FromCsvFile(fixturePath);
     var records = store.GetRecordsForWindow(fromUtc, toUtc);
 
